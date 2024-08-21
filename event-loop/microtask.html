@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Custom Element Example</title>
+  </head>
+  <body>
+    <script>
+      class CustomElement extends HTMLElement {
+        constructor() {
+          super();
+          this.cache = {};
+          this.data = null;
+        }
+
+        getData(url) {
+          if (this.cache[url]) {
+            console.log("fetching from cache");
+            this.data = this.cache[url];
+            this.dispatchEvent(new Event("load"));
+          } else {
+            console.log("fetching from network");
+            fetch(url)
+              .then((result) => result.arrayBuffer())
+              .then((data) => {
+                this.cache[url] = data;
+                this.data = data;
+                this.dispatchEvent(new Event("load"));
+              });
+          }
+        }
+      }
+
+      customElements.define("custom-element", CustomElement);
+
+      const element = document.createElement("custom-element");
+      document.body.appendChild(element); // Append the element to the DOM
+
+      element.addEventListener("load", () => console.log("Loaded data"));
+      console.log("Fetching data 1st time");
+      element.getData("http://127.0.0.1:5500/event-loop/other-file.html");
+      console.log("Data fetched 1st time");
+      // Why does the second load
+      setTimeout(() => {
+        console.log("Fetching data 2nd time");
+        element.getData("http://127.0.0.1:5500/event-loop/other-file.html");
+        console.log("Data fetched 2nd time");
+      }, 1000);
+    </script>
+  </body>
+</html>
